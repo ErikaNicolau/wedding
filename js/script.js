@@ -133,22 +133,16 @@
 
     $('.married_coundown').countdown({until: new Date("May 23, 2026 14:00:00")});
     
-    /* Falling Petals Animation - Exact Implementation */
+    /* Falling Petals Animation - Simple & Consistent */
     function initFallingPetals() {
       if (typeof gsap === 'undefined') {
-        setTimeout(initFallingPetals, 200);
+        setTimeout(initFallingPetals, 100);
         return;
       }
       
       var container = document.getElementById("container");
       if (!container) {
-        setTimeout(initFallingPetals, 200);
-        return;
-      }
-      
-      // Wait for page to be fully loaded
-      if (document.readyState !== 'complete') {
-        setTimeout(initFallingPetals, 300);
+        setTimeout(initFallingPetals, 100);
         return;
       }
       
@@ -157,124 +151,119 @@
       
       gsap.set("#container", {perspective: 600});
       
-      var total = 60;
-      var warp = document.getElementById("container");
-      var w = window.innerWidth;
-      var h = window.innerHeight;
-      
-      // Get hero and footer to calculate start and end positions
-      var hero = document.querySelector('.home_intro');
-      var footer = document.querySelector('.footer');
+      var activePetals = [];
+      var maxPetals = 15; // Maximum number of petals on screen at once
       
       function R(min, max) {
         return min + Math.random() * (max - min);
       }
       
-      // Calculate start Y (below hero) and end Y (end of page)
-      // Since container is fixed, we need viewport-relative positions
-      var startY, endY;
-      
-      // Get hero bottom position relative to viewport
-      if (hero) {
-        var heroRect = hero.getBoundingClientRect();
-        startY = heroRect.bottom + 20; // Just below hero
-      } else {
-        startY = 300; // Fallback
-      }
-      
-      // Get page height for end position
-      // Since container is fixed, we need to calculate based on scroll position
-      // For fixed container, endY should be relative to viewport
-      var pageHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
-        window.innerHeight
-      );
-      
-      // Calculate where footer is relative to viewport when at bottom
-      // For simplicity, use a large value that covers the full page
-      endY = pageHeight + 100;
-      
-      // Ensure valid range
-      if (endY <= startY) {
-        endY = startY + 800;
-      }
-      
-      for (var i = 0; i < total; i++) {
-        var Div = document.createElement('div');
-        // Convert GSAP 2.x attr to GSAP 3.x className
-        // Stagger the start delay so they appear one by one
-        var startDelay = (i / total) * 30; // Spread over 30 seconds for continuous appearance
+      function createPetal() {
+        var petal = document.createElement('div');
+        var w = window.innerWidth;
+        var h = window.innerHeight;
         
-        // Start each petal at the top (below hero) but with a delay
-        // Hide them initially, they'll appear when animation starts
-        gsap.set(Div, {
+        // Start from very top of viewport
+        var startX = R(0, w);
+        var startY = 0; // Start at the very top of the page
+        var endY = h; // End at the very bottom of the page
+        
+        // Set initial position
+        gsap.set(petal, {
           className: 'dot',
-          x: R(0, w),
-          y: startY, // All start at the same top position
+          x: startX,
+          y: startY,
           z: R(-200, 200),
-          opacity: 0 // Start invisible
-        });
-        warp.appendChild(Div);
-        animm(Div, endY, startDelay);
-      }
-      
-      function animm(elm, endY, startDelay) {
-        // Convert to GSAP 3.x syntax - slower falling animation
-        // Fade in when animation starts
-        gsap.to(elm, {
-          opacity: 1,
-          duration: 0.5,
-          delay: startDelay
+          opacity: 0
         });
         
-        // Falling animation - starts after delay
-        gsap.to(elm, {
+        container.appendChild(petal);
+        activePetals.push(petal);
+        
+        // Fade in quickly
+        gsap.to(petal, {
+          opacity: 0.8,
+          duration: 0.3
+        });
+        
+        // Falling animation - consistent speed
+        var fallDuration = R(20, 30); // 20-30 seconds to fall
+        
+        gsap.to(petal, {
           y: endY,
-          duration: R(25, 40), // Much slower falling
+          duration: fallDuration,
           ease: "none",
-          repeat: -1,
-          delay: startDelay // Staggered delay for continuous appearance
+          onComplete: function() {
+            // Remove petal when it reaches bottom
+            if (petal.parentNode) {
+              petal.parentNode.removeChild(petal);
+            }
+            // Remove from active array
+            var index = activePetals.indexOf(petal);
+            if (index > -1) {
+              activePetals.splice(index, 1);
+            }
+          }
         });
         
-        gsap.to(elm, {
-          x: "+=100",
-          rotationZ: R(0, 180),
-          duration: R(8, 15), // Slower horizontal movement
+        // Gentle horizontal drift
+        gsap.to(petal, {
+          x: startX + R(-100, 100),
+          duration: R(10, 15),
           repeat: -1,
           yoyo: true,
           ease: "sine.inOut"
         });
         
-        gsap.to(elm, {
+        // Rotation
+        gsap.to(petal, {
+          rotationZ: R(0, 360),
+          duration: R(8, 12),
+          repeat: -1,
+          ease: "none"
+        });
+        
+        gsap.to(petal, {
           rotationX: R(0, 360),
           rotationY: R(0, 360),
-          duration: R(5, 12), // Slower rotation
+          duration: R(6, 10),
           repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: -5
+          ease: "sine.inOut"
         });
       }
       
-      // Handle window resize
-      var resizeTimer;
-      window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-          initFallingPetals();
-        }, 250);
-      });
+      // Create first petal immediately
+      createPetal();
+      
+      // Create new petals at regular intervals
+      // Adjust interval based on how many petals are active
+      function scheduleNextPetal() {
+        var interval = 1500; // Create new petal every 1.5 seconds
+        
+        // If we have fewer petals than max, create one sooner
+        if (activePetals.length < maxPetals) {
+          setTimeout(function() {
+            createPetal();
+            scheduleNextPetal();
+          }, interval);
+        } else {
+          // Wait a bit longer if we're at max
+          setTimeout(function() {
+            scheduleNextPetal();
+          }, interval * 2);
+        }
+      }
+      
+      // Start the continuous creation loop
+      scheduleNextPetal();
     }
     
-    // Initialize
-    window.addEventListener('load', function() {
-      setTimeout(initFallingPetals, 500);
-    });
-    
-    $(document).ready(function() {
-      setTimeout(initFallingPetals, 800);
-    });
+    // Initialize immediately when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initFallingPetals);
+    } else {
+      initFallingPetals();
+    }
 
   });
 }(jQuery));
