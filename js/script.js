@@ -131,7 +131,11 @@
     });
 
 
-    $('.married_coundown').countdown({until: new Date("May 23, 2026 14:00:00")});
+    $('.married_coundown').countdown({
+      until: new Date("May 23, 2026 14:00:00"),
+      labels: ['Ani', 'Luni', 'Săptămâni', 'Zile', 'Ore', 'Minute', 'Secunde'],
+      labels1: ['An', 'Lună', 'Săptămână', 'Zi', 'Oră', 'Minut', 'Secundă']
+    });
     
     /* Falling Petals Animation - Simple & Consistent */
     function initFallingPetals() {

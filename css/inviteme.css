@@ -436,7 +436,7 @@ header {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('../img/marble.png');
+  background-image: url('../img/marble.png?v=3');
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -1586,7 +1586,7 @@ textarea.form-control:focus {
   width: 35px;
   height: 35px;
   position: absolute;
-  background: url(https://image.ibb.co/kyUHab/rose.png);
+  background: url('../img/rose.png');
   background-size: 100% 100%;
   opacity: 0.8;
 }
