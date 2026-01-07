@@ -1,8 +1,8 @@
 const SHEET_ID = '15VrbrEp4Z_hAgKZNJ1UMQ4JrJLd8Vbkh-ED7MICfXTE';
 
 // Email addresses to receive notifications
-const EMAIL_1 = 'diana_maria_erika@yahoo.com';
-const EMAIL_2 = 'madalingarbeagabriel@gmail.com';
+const EMAIL_1 = 'alex_istrate594@yahoo.com';
+const EMAIL_2 = 'alex.istrate594@yahoo.com';
 const EMAIL_3 = 'aerika04@yahoo.com'; 
 
 function doPost(e) {
@@ -51,9 +51,14 @@ function doPost(e) {
 
     sheet.appendRow(rowData);
 
+    // Try to send email notification
+    let emailResult = false;
     try {
-      sendEmailNotification(data);
-    } catch (_) {}
+      emailResult = sendEmailNotification(data);
+    } catch (emailError) {
+      // Log error but don't fail the request
+      console.error('Email sending error:', emailError.toString());
+    }
 
     return ContentService
       .createTextOutput(JSON.stringify({
@@ -108,11 +113,31 @@ Va puuup,
 IERI.SRL
   `.trim();
 
-  MailApp.sendEmail({
-    to: emailAddresses.join(','),
-    subject,
-    body
-  });
-
-  return true;
+  try {
+    MailApp.sendEmail({
+      to: emailAddresses.join(','),
+      subject: subject,
+      body: body
+    });
+    console.log('Email sent successfully to:', emailAddresses.join(', '));
+    return true;
+  } catch (error) {
+    console.error('Failed to send email:', error.toString());
+    console.error('Email addresses:', emailAddresses);
+    // Try sending to each email individually if batch fails
+    try {
+      emailAddresses.forEach(email => {
+        MailApp.sendEmail({
+          to: email,
+          subject: subject,
+          body: body
+        });
+      });
+      console.log('Emails sent individually');
+      return true;
+    } catch (individualError) {
+      console.error('Failed to send emails individually:', individualError.toString());
+      return false;
+    }
+  }
 }
